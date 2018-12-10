@@ -16,7 +16,7 @@ class OldHardwareReport(Report):
         today = datetime.datetime.today()
         for machine in Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)):
             cfs = machine.cf()
-           purchase_date = cfs["purchase_date"]
+            purchase_date = cfs["purchase_date"]
             if purchase_date is None:
                 self.log_failure(machine, "null purchase date.")
                 continue

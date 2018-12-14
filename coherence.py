@@ -19,22 +19,26 @@ class Coherence(Report):
 
     def test_asset_tags(self):
         """Test for missing asset tags, asset tag dupes and incorrectly formatted asset tags."""
+        success_count = 0
         for machine in Device.objects.all():
             if machine.asset_tag is None:
                 self.log_failure(machine, "missing asset tag")
             elif not self.asset_tag_re.fullmatch(machine.asset_tag):
                 self.log_failure(machine, "incorrectly formatted asset tag {}".format(machine.asset_tag))
             else:
-                self.log_success(machine, "asset tag in proper format")
+                success_count += 1
+        self.log("{} ok asset tags.".format(success_count))
 
     def test_purchase_date(self):
         """Test that each machine has a purchase date."""
+        success_count = 0
         for machine in Device.objects.all():
             purchase_date = machine.cf()["purchase_date"]
             if purchase_date is None:
                 self.log_failure(machine, "missing purchase date.")
             else:
-                self.log_success(machine, "purchase date present ({}).".format(purchase_date))
+                success_count += 1
+        self.log("{} ok purchase dates.".format(success_count))
 
     def test_duplicate_serials(self):
         """Test that all serial numbers are unique."""
@@ -55,13 +59,16 @@ class Coherence(Report):
 
     def test_serials(self):
         """Determine if all serials are non-null."""
+        success_count = 0
         for machine in Device.objects.all():
             if machine.serial is None or machine.serial == "":
                 self.log_failure(machine, "serial missing")
             else:
-                self.log_success(machine, "serial present")
+                success_count += 1
+        self.log("{} ok serials.".format(success_count))
 
     def test_ticket(self):
+        success_count = 0
         for machine in Device.objects.all():
             ticket = str(machine.cf()["ticket"])
             good_result = False
@@ -69,6 +76,7 @@ class Coherence(Report):
                 if tre.fullmatch(ticket):
                     good_result = True
             if good_result:
-                self.log_success(machine, "good procurement ticket: {}".format(ticket))
+                success_count += 1
             else:
                 self.log_failure(machine, "bad procurement ticket: {}".format(ticket))
+        self.log("{} ok tickets.".format(success_count))

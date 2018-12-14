@@ -23,6 +23,7 @@ class ManagementConsole(Report):
     description = __doc__
 
     def test_management_console(self):
+        successcount = 0
         roles = DeviceRole.objects.filter(slug__in=DEVICEROLES).values_list("pk", flat=True)
         sites = Site.objects.exclude(slug__in=EXCLUDED_SITES).values_list("pk", flat=True)
         for machine in (
@@ -38,7 +39,8 @@ class ManagementConsole(Report):
 
             for port in ports:
                 if port.connection_status == CONNECTION_STATUS_CONNECTED and port.cs_port not in (None, ""):
-                    self.log_success(machine, "at least one console connection is present")
+                    successcount += 1
                     break
             else:
                 self.log_failure(machine, "only unconnected console ports are present")
+        self.log("{} machines with connected ports.".format(successcount))

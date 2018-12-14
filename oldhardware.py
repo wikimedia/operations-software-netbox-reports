@@ -14,6 +14,8 @@ class OldHardwareReport(Report):
 
     def test_hardware_age(self):
         today = datetime.datetime.today()
+        success_count = 0
+
         for machine in Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)):
             cfs = machine.cf()
             purchase_date = cfs["purchase_date"]
@@ -31,6 +33,6 @@ class OldHardwareReport(Report):
                     machine, "older than 4.5 years (purchase date: {} age: {:02.1f}y)".format(purchase_date, age)
                 )
             else:
-                self.log_success(
-                    machine, "younger than 5 years (purchase date:  {} age: {:02.1f}y)".format(purchase_date, age)
-                )
+                success_count += 1
+
+        self.log("{} good hardware ages.".format(success_count))

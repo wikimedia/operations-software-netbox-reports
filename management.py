@@ -31,7 +31,7 @@ class ManagementConsole(Report):
             .filter(device_role__in=roles)
             .filter(site__in=sites)
         ):
-            ports = machine.console_ports.all()
+            ports = machine.consoleports.all()
 
             if not ports:
                 self.log_failure(machine, "no console ports present")

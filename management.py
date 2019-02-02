@@ -38,7 +38,7 @@ class ManagementConsole(Report):
                 continue
 
             for port in ports:
-                if port.connection_status == CONNECTION_STATUS_CONNECTED and port.cs_port not in (None, ""):
+                if port.connection_status == CONNECTION_STATUS_CONNECTED:
                     successcount += 1
                     break
             else:

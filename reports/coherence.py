@@ -2,20 +2,18 @@
 Several integrity/coherence checks against the data.
 """
 
-import datetime
 import re
 
 from django.db.models import Count
 
-from dcim.constants import DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE
 from dcim.models import Device
 from extras.reports import Report
 
 
 class Coherence(Report):
     description = __doc__
-    asset_tag_re = re.compile("WMF\d{4}")
-    ticket_re = [re.compile("RT #\d+"), re.compile("T\d+")]
+    asset_tag_re = re.compile(r"WMF\d{4}")
+    ticket_re = [re.compile(r"RT #\d+"), re.compile(r"T\d+")]
 
     def test_asset_tags(self):
         """Test for missing asset tags, asset tag dupes and incorrectly formatted asset tags."""

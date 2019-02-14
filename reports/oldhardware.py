@@ -9,6 +9,9 @@ from dcim.models import Device
 from extras.reports import Report
 
 
+EXCLUDE_ROLES = ("cablemgmt", "storagebin")
+
+
 class OldHardwareReport(Report):
     description = __doc__
 
@@ -16,7 +19,9 @@ class OldHardwareReport(Report):
         today = datetime.datetime.today()
         success_count = 0
 
-        for machine in Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)):
+        for machine in Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)).exclude(
+            device_role__slug__in=EXCLUDE_ROLES
+        ):
             cfs = machine.cf()
             purchase_date = cfs["purchase_date"]
             if purchase_date is None:

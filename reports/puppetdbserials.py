@@ -1,62 +1,116 @@
 """
-Report any device whose serial number does not match the serial number in PuppetDB
+Report parity errors between PuppetDB and Netbox.
 """
 
 import configparser
 import requests
 
-from dcim.constants import DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED
+from dcim.constants import DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED, DEVICE_STATUS_CHOICES
 from dcim.models import Device
 from extras.reports import Report
+from virtualization.models import VirtualMachine
 
 CONFIG_FILE = "/etc/netbox-reports.cfg"
 
+# slugs for roles which we care about
 INCLUDE_ROLES = ("server",)
-EXCLUDE_DEV_TYPES = ("atlas-anchor-v1",)
+
+# slugs for tenants that we don't care about
+EXCLUDE_TENANTS = ("fundraising-tech", "ripe")
+
+# statuses that only warn for parity failures
+SOFT_CHECK_STATUS = (DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED)
 
 
-class PuppetDBSerials(Report):
+class PuppetDB(Report):
     description = __doc__
 
-    def test_puppetdb_serials(self):
-        # get puppetdb "serials" facts
+    def __init__(self, *args, **kwargs):
+        """Load the data from the endpoint as needed by the reports."""
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
-
         puppetdb_url = config["puppetdb"]["url"]
-        request = requests.get(puppetdb_url + "/v1/factcheck/serialnumber", verify=config["puppetdb"]["ca_cert"])
+
+        request = requests.get(puppetdb_url + "/v1/facts/serialnumber", verify=config["puppetdb"]["ca_cert"])
         if request.status_code != 200:
-            self.log_failure(
-                None, "cannot access puppetdb at {} - {} from microservice.".format(puppetdb_url, request.status_code)
+            raise Exception(
+                "Cannot connect to PuppetDB {} - {} {}".format(puppetdb_url, request.status_code, request.text)
             )
-            return
 
-        puppetdb_serials = {}
-        for item in request.json():
-            # item[0] is the certname from puppetdb, item[1] is the serial number string
-            shortname = item[0].split(".")[0]
-            puppetdb_serials[shortname] = item[1]
+        self.puppetdb_serials = request.json()
+        self.device_query = Device.objects.filter(device_role__slug__in=INCLUDE_ROLES).exclude(
+            tenant__slug__in=EXCLUDE_TENANTS
+        )
 
-        hosts_set = set()
-        success_count = 0
-        for machine in (
-            Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED))
-            .filter(device_role__slug__in=INCLUDE_ROLES)
-            .exclude(device_type__slug__in=EXCLUDE_DEV_TYPES)
-        ):
-            hosts_set.add(machine.name)
-            if machine.name not in puppetdb_serials:
-                self.log_failure(machine, "machine does not exist in puppet")
-            elif machine.serial != puppetdb_serials[machine.name] and puppetdb_serials[machine.name] is not None:
+        super(Report, self).__init__(*args, **kwargs)
+
+    def test_puppetdb_in_netbox(self):
+        """Check the devices we expect to be in Netbox which are in PuppetDB are indeed in Netbox."""
+        hostnames = list(self.device_query.values_list("name", flat=True))
+        success = 0
+        for host, serial in self.puppetdb_serials.items():
+            if serial is None:
+                # Virtual machines have a None fact for their serial
+                continue
+            if host not in hostnames:
+                self.log_failure(None, "{} device missing from Netbox".format(host))
+            else:
+                success += 1
+
+        self.log_info("{} physical devices that are in PuppetDB are also in Netbox.".format(success))
+
+    def test_netbox_in_puppetdb(self):
+        """Check the devices we expect to be in PuppetDB which are in Netbox are indeed in PuppetDB."""
+        hosts = self.device_query
+        success = 0
+        softfail = set()
+        status_labels = {x[0]: x[1] for x in DEVICE_STATUS_CHOICES}
+
+        for host in hosts:
+            if host.name not in self.puppetdb_serials:
+                if host.status in SOFT_CHECK_STATUS:
+                    softfail.add(host)
+                else:
+                    self.log_failure(host, "device missing from PuppetDB")
+            else:
+                success += 1
+        for host in softfail:
+            self.log_warning(
+                host, "(soft) device missing from PuppetDB (with status {})".format(status_labels[host.status])
+            )
+
+        self.log_info("{} devices that are in Netbox are also in PuppetDB".format(success))
+
+    def test_puppetdb_serials(self):
+        """Check that devices that exist in both PuppetDB and Netbox have matching serial numbers."""
+        hosts = self.device_query
+        success = 0
+
+        for host in hosts:
+            if host.name not in self.puppetdb_serials:
+                continue
+            if host.serial != self.puppetdb_serials[host.name]:
                 self.log_failure(
-                    machine,
-                    "serial mismatch {}(netbox) != {}(puppetdb)".format(machine.serial, puppetdb_serials[machine.name]),
+                    host,
+                    "serials do not match: netbox:{} != puppetdb:{}".format(
+                        host.serial, self.puppetdb_serials[host.name]
+                    ),
                 )
             else:
-                success_count += 1
+                success += 1
 
-        netbox_missing = set(puppetdb_serials.keys()) - hosts_set
-        for missing in netbox_missing:
-            self.log_failure(None, "{} MISSING from Netbox".format(missing))
+        self.log_info("{} devices have matching serial numbers.".format(success))
 
-        self.log("{} serials match.".format(success_count))
+    def test_puppetdb_vms_in_netbox(self):
+        """Test if all None serials are Ganeti VMs in netbox."""
+        hosts = list(VirtualMachine.objects.all().values_list("name", flat=True))
+        puppetnulls = [host for host, serial in self.puppetdb_serials.items() if serial is None]
+        success = 0
+
+        for host in puppetnulls:
+            if host not in hosts:
+                self.log_failure(None, "{} not in Netbox VMs.".format(host))
+            else:
+                success += 1
+
+        self.log_info("{} VWs from PuppetDB in Netbox.".format(success))

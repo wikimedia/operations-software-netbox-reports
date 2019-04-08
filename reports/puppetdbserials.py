@@ -42,7 +42,7 @@ class PuppetDB(Report):
             tenant__slug__in=EXCLUDE_TENANTS
         )
 
-        super(Report, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def test_puppetdb_in_netbox(self):
         """Check the devices we expect to be in Netbox which are in PuppetDB are indeed in Netbox."""
@@ -57,7 +57,7 @@ class PuppetDB(Report):
             else:
                 success += 1
 
-        self.log_info("{} physical devices that are in PuppetDB are also in Netbox.".format(success))
+        self.log_info(None, "{} physical devices that are in PuppetDB are also in Netbox.".format(success))
 
     def test_netbox_in_puppetdb(self):
         """Check the devices we expect to be in PuppetDB which are in Netbox are indeed in PuppetDB."""
@@ -79,7 +79,7 @@ class PuppetDB(Report):
                 host, "(soft) device missing from PuppetDB (with status {})".format(status_labels[host.status])
             )
 
-        self.log_info("{} devices that are in Netbox are also in PuppetDB".format(success))
+        self.log_info(None, "{} devices that are in Netbox are also in PuppetDB".format(success))
 
     def test_puppetdb_serials(self):
         """Check that devices that exist in both PuppetDB and Netbox have matching serial numbers."""
@@ -99,7 +99,7 @@ class PuppetDB(Report):
             else:
                 success += 1
 
-        self.log_info("{} devices have matching serial numbers.".format(success))
+        self.log_info(None, "{} devices have matching serial numbers.".format(success))
 
     def test_puppetdb_vms_in_netbox(self):
         """Test if all None serials are Ganeti VMs in netbox."""
@@ -113,4 +113,4 @@ class PuppetDB(Report):
             else:
                 success += 1
 
-        self.log_info("{} VWs from PuppetDB in Netbox.".format(success))
+        self.log_info(None, "{} VMs from PuppetDB in Netbox.".format(success))

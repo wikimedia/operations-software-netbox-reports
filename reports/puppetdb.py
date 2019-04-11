@@ -53,7 +53,7 @@ class PuppetDB(Report):
             if host in valid_netbox_hosts:
                 success += 1
             elif host in invalid_netbox_hosts:
-                invalid_host = Device.objects.filter(name=host)
+                invalid_host = Device.objects.get(name=host)
                 self.log_failure(
                     invalid_host,
                     "PuppetDB physical host {host} has unexpected state {state} in Netbox".format(
@@ -74,9 +74,9 @@ class PuppetDB(Report):
             if host.name in self.puppetdb_serials:
                 success += 1
             else:
-                self.log_failure(host, "Physical host {} not in PuppetDB".format(host=host.name))
+                self.log_failure(host, "Physical host {} not in PuppetDB".format(host.name))
 
-        self.log_info(None, "{} pyshical hosts that are in Netbox are also in PuppetDB".format(success))
+        self.log_info(None, "{} physical hosts that are in Netbox are also in PuppetDB".format(success))
 
     def test_puppetdb_serials(self):
         """Check that hosts that exist in both PuppetDB and Netbox have matching serial numbers."""
@@ -114,12 +114,12 @@ class PuppetDB(Report):
 
     def test_netbox_vms_in_puppetdb(self):
         """Check that all Netbox VMs are in PuppetDB VMs."""
-        vms = list(VirtualMachine.objects.all().values_list("name", flat=True))
+        vms = VirtualMachine.objects.all()
         puppetdb_vms = [host for host, serial in self.puppetdb_serials.items() if serial is None]
 
         success = 0
         for vm in vms:
-            if vm in puppetdb_vms:
+            if vm.name in puppetdb_vms:
                 success += 1
             else:
                 self.log_failure(vm, "Netbox VM {} not in PuppetDB VMs".format(vm.name))

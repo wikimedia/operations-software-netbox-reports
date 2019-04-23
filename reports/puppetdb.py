@@ -34,6 +34,18 @@ class PuppetDB(Report):
         super().__init__(*args, **kwargs)
 
     def _get_puppetdb_fact(self, fact):
+        """Query the PuppetDB proxy for a specified fact.
+
+        Arguments:
+           fact (str): The fact name to query
+
+        Returns:
+            dict: Keyed by short hostname, with te value.
+
+        Raises:
+            Exception: on communication failure.
+
+        """
         url = "/".join([self.config["puppetdb"]["url"], "/v1/facts", fact])
         response = requests.get(url, verify=self.config["puppetdb"]["ca_cert"])
         if response.status_code != 200:
@@ -57,14 +69,12 @@ class PuppetDB(Report):
                 invalid_host = Device.objects.get(name=host)
                 self.log_failure(
                     invalid_host,
-                    "PuppetDB physical host {host} has unexpected state {state} in Netbox".format(
-                        host=host, state=invalid_host.get_status_display()
-                    ),
+                    "unexpected state for physical host: {} in netbox".format(invalid_host.get_status_display()),
                 )
             else:
-                self.log_failure(None, "PuppetDB physical host {} not in Netbox".format(host))
+                self.log_failure(None, "expected host missing from Netbox: {}".format(host))
 
-        self.log_info(None, "{} physical hosts that are in PuppetDB are also in Netbox".format(success))
+        self.log_success(None, "{} physical hosts that are in PuppetDB are also in Netbox".format(success))
 
     def test_netbox_in_puppetdb(self):
         """Check that all Netbox physical hosts are in PuppetDB."""
@@ -73,13 +83,15 @@ class PuppetDB(Report):
 
         for host in hosts:
             if host.name not in self.puppetdb_hosts:
-                self.log_failure(host, "Physical host {} not in PuppetDB".format(host.name))
+                self.log_failure(
+                    host, "missing physical host in PuppetDB: state {} in Netbox".format(host.get_status_display())
+                )
             elif self.puppetdb_hosts[host.name]:
-                self.log_failure(host, "Physical host {} marked as virtual in PuppetDB".format(host.name))
+                self.log_failure(host, "expected physical host marked as virtual in PuppetDB")
             else:
                 success += 1
 
-        self.log_info(None, "{} physical hosts that are in Netbox are also in PuppetDB".format(success))
+        self.log_success(None, "{} physical hosts that are in Netbox are also in PuppetDB".format(success))
 
     def test_puppetdb_serials(self):
         """Check that hosts that exist in both PuppetDB and Netbox have matching serial numbers."""
@@ -92,14 +104,14 @@ class PuppetDB(Report):
             if host.serial != self.puppetdb_serials[host.name]:
                 self.log_failure(
                     host,
-                    "Serials do not match: netbox:{} != puppetdb:{}".format(
+                    "mismatched serials: {} (netbox) != {} (puppetdb)".format(
                         host.serial, self.puppetdb_serials[host.name]
                     ),
                 )
             else:
                 success += 1
 
-        self.log_info(None, "{} physical hosts have matching serial numbers".format(success))
+        self.log_success(None, "{} physical hosts have matching serial numbers".format(success))
 
     def test_puppetdb_vms_in_netbox(self):
         """Check that all PuppetDB VMs are in Netbox VMs."""
@@ -111,11 +123,11 @@ class PuppetDB(Report):
                 continue
 
             if host not in vms:
-                self.log_failure(None, "PuppetDB VM {} not in Netbox VMs".format(host))
+                self.log_failure(None, "missing VM from Netbox: {} ".format(host))
             else:
                 success += 1
 
-        self.log_info(None, "{} VMs that are in PuppetDB are also in Netbox VMs".format(success))
+        self.log_success(None, "{} VMs that are in PuppetDB are also in Netbox VMs".format(success))
 
     def test_netbox_vms_in_puppetdb(self):
         """Check that all Netbox VMs are in PuppetDB VMs."""
@@ -124,10 +136,10 @@ class PuppetDB(Report):
         success = 0
         for vm in vms:
             if vm.name not in self.puppetdb_hosts:
-                self.log_failure(vm, "Netbox VM {} not in PuppetDB".format(vm.name))
+                self.log_failure(vm, "missing VM from PuppetDB")
             elif not self.puppetdb_hosts[vm.name]:
-                self.log_failure(vm, "Netbox VM {} marked as physical in PuppetDB".format(vm.name))
+                self.log_failure(vm, "expected VM marked as Physical in PuppetDB")
             else:
                 success += 1
 
-        self.log_info(None, "{} VMs that are in Netbox are also in PuppetDB VMs".format(success))
+        self.log_success(None, "{} VMs that are in Netbox are also in PuppetDB VMs".format(success))

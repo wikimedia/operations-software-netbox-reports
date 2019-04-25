@@ -55,6 +55,7 @@ class Coherence(Report):
         dups = (
             _get_devices_query()
             .values("serial")
+            .exclude(device_role__slug__in=DEVICE_ROLE_BLACKLIST)
             .exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE))
             .exclude(serial="")
             .exclude(serial__isnull=True)
@@ -92,23 +93,22 @@ class Coherence(Report):
             ticket = str(device.cf()["ticket"])
             if TICKET_RE.fullmatch(ticket):
                 success_count += 1
+            elif device.cf()["ticket"] is None:
+                self.log_failure(device, "missing procurement ticket")
             else:
                 self.log_failure(device, "malformed procurement ticket: {}".format(ticket))
+
         self.log_success(None, "{} correctly formatted procurement tickets".format(success_count))
 
     def test_offline_rack(self):
         """Determine if offline boxes are (erroneously) assigned a rack."""
-        warnings = []
-        message = "rack defined for status {status} device: {site}-{rack}"
-        for device in (
-            _get_devices_query().filter(status__in=(DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED)).exclude(rack=None)
-        ):
-            if device.status == DEVICE_STATUS_PLANNED:
-                warnings.append(device)
-            else:
-                self.log_failure(device, message.format(status="Offline", site=device.site.slug, rack=device.rack.name))
-        for warning in warnings:
-            self.log_warning(device, message.format(status="Planned", site=device.site.slug, rack=device.rack.name))
+        for device in _get_devices_query().filter(status=DEVICE_STATUS_OFFLINE).exclude(rack=None):
+            self.log_failure(
+                device,
+                "rack defined for status {status} device: {site}-{rack}".format(
+                    status="Offline", site=device.site.slug, rack=device.rack.name
+                ),
+            )
 
     def test_online_rack(self):
         """Determine if online boxes are (erroneously) lacking a rack assignment."""

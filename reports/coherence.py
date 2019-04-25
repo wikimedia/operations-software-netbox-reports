@@ -44,7 +44,7 @@ class Coherence(Report):
             purchase_date = device.cf()["purchase_date"]
             if purchase_date is None:
                 self.log_failure(device, "missing purchase date")
-            elif purchase_date > datetime.datetime.today():
+            elif purchase_date > datetime.datetime.today().date():
                 self.log_failure(device, "purchase date is in the future")
             else:
                 success_count += 1

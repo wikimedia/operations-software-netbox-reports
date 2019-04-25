@@ -79,7 +79,11 @@ class Coherence(Report):
     def test_serials(self):
         """Determine if all serials are non-null."""
         success_count = 0
-        for device in _get_devices_query().exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)):
+        for device in (
+            _get_devices_query()
+            .exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE))
+            .exclude(device_role__slug__in=DEVICE_ROLE_BLACKLIST)
+        ):
             if device.serial is None or device.serial == "":
                 self.log_failure(device, "missing serial")
             else:

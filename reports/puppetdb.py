@@ -115,7 +115,7 @@ class PuppetDB(Report):
 
     def test_puppetdb_vms_in_netbox(self):
         """Check that all PuppetDB VMs are in Netbox VMs."""
-        vms = list(VirtualMachine.objects.all().values_list("name", flat=True))
+        vms = list(VirtualMachine.objects.exclude(status=DEVICE_STATUS_OFFLINE).values_list("name", flat=True))
         success = 0
 
         for host, is_virtual in self.puppetdb_hosts.items():
@@ -131,7 +131,8 @@ class PuppetDB(Report):
 
     def test_netbox_vms_in_puppetdb(self):
         """Check that all Netbox VMs are in PuppetDB VMs."""
-        vms = VirtualMachine.objects.all()
+
+        vms = VirtualMachine.objects.exclude(status=DEVICE_STATUS_OFFLINE)
 
         success = 0
         for vm in vms:

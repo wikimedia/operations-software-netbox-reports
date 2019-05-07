@@ -35,7 +35,7 @@ class OldHardwareReport(Report):
 
         cf_ids = devquery.values_list('custom_field_values__pk', flat=True)
         cfs = {
-            cf.pk: cf.value
+            cf.obj_id: cf.value
             for cf in CustomFieldValue.objects.prefetch_related('field')
             .filter(field__name='purchase_date')
             .filter(pk__in=cf_ids)

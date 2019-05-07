@@ -121,7 +121,7 @@ class PuppetDB(Report):
         success = 0
 
         for device in devices:
-            if device.name not in self.self.puppetdb_models:
+            if device.name not in self.puppetdb_models:
                 continue
 
             if device.device_type.model != self.puppetdb_models[device.name]:

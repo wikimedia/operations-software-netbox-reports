@@ -5,7 +5,12 @@ Report parity errors between PuppetDB and Netbox.
 import configparser
 import requests
 
-from dcim.constants import DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED
+from dcim.constants import (
+    DEVICE_STATUS_DECOMMISSIONING,
+    DEVICE_STATUS_INVENTORY,
+    DEVICE_STATUS_OFFLINE,
+    DEVICE_STATUS_PLANNED,
+)
 from dcim.models import Device
 from extras.reports import Report
 from virtualization.models import VirtualMachine
@@ -16,7 +21,12 @@ CONFIG_FILE = "/etc/netbox-reports.cfg"
 INCLUDE_ROLES = ("server",)
 
 # statuses that only warn for parity failures
-EXCLUDE_STATUSES = (DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED)
+EXCLUDE_STATUSES = (
+    DEVICE_STATUS_INVENTORY,
+    DEVICE_STATUS_OFFLINE,
+    DEVICE_STATUS_PLANNED,
+    DEVICE_STATUS_DECOMMISSIONING,
+)
 
 
 class PuppetDB(Report):

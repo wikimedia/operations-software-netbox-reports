@@ -5,7 +5,7 @@ Report any hardware older than 5 years.
 import datetime
 
 
-from dcim.constants import DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE
+from dcim.constants import DEVICE_STATUS_DECOMMISSIONING, DEVICE_STATUS_OFFLINE
 from dcim.models import Device
 from extras.models import CustomFieldValue
 from extras.reports import Report
@@ -29,7 +29,7 @@ class OldHardwareReport(Report):
         # We have to sort the devices ourselves since the custom fields is not available from the Django ORM in any
         # normal way.
         results = []
-        devquery = Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE)).exclude(
+        devquery = Device.objects.exclude(status__in=(DEVICE_STATUS_DECOMMISSIONING, DEVICE_STATUS_OFFLINE)).exclude(
             device_role__slug__in=EXCLUDE_ROLES
         )
 

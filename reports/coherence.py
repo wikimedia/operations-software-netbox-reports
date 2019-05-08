@@ -5,7 +5,12 @@ Several integrity/coherence checks against the data.
 import datetime
 import re
 
-from dcim.constants import DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED, DEVICE_STATUS_INVENTORY
+from dcim.constants import (
+    DEVICE_STATUS_DECOMMISSIONING,
+    DEVICE_STATUS_OFFLINE,
+    DEVICE_STATUS_PLANNED,
+    DEVICE_STATUS_INVENTORY,
+)
 from dcim.models import Device
 from extras.reports import Report
 
@@ -56,7 +61,7 @@ class Coherence(Report):
             _get_devices_query()
             .values("serial")
             .exclude(device_role__slug__in=DEVICE_ROLE_BLACKLIST)
-            .exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE))
+            .exclude(status__in=(DEVICE_STATUS_DECOMMISSIONING, DEVICE_STATUS_OFFLINE))
             .exclude(serial="")
             .exclude(serial__isnull=True)
             .annotate(count=Count("pk"))
@@ -68,7 +73,7 @@ class Coherence(Report):
         if dups:
             for device in (
                 _get_devices_query()
-                .exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE))
+                .exclude(status__in=(DEVICE_STATUS_DECOMMISSIONING, DEVICE_STATUS_OFFLINE))
                 .filter(serial__in=list(dups))
                 .order_by("serial")
             ):
@@ -81,7 +86,7 @@ class Coherence(Report):
         success_count = 0
         for device in (
             _get_devices_query()
-            .exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE))
+            .exclude(status__in=(DEVICE_STATUS_DECOMMISSIONING, DEVICE_STATUS_OFFLINE))
             .exclude(device_role__slug__in=DEVICE_ROLE_BLACKLIST)
         ):
             if device.serial is None or device.serial == "":
@@ -117,6 +122,8 @@ class Coherence(Report):
     def test_online_rack(self):
         """Determine if online boxes are (erroneously) lacking a rack assignment."""
         for device in (
-            _get_devices_query().exclude(status__in=(DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED)).filter(rack=None)
+            _get_devices_query()
+            .exclude(status__in=(DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED, DEVICE_STATUS_INVENTORY))
+            .filter(rack=None)
         ):
             self.log_failure(device, "no rack defined for status {} device".format(device.get_status_display()))

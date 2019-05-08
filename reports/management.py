@@ -4,6 +4,7 @@ Check certain kinds of devices for the presence of a console port.
 
 from dcim.constants import (
     CONNECTION_STATUS_CONNECTED,
+    DEVICE_STATUS_DECOMMISSIONING,
     DEVICE_STATUS_INVENTORY,
     DEVICE_STATUS_OFFLINE,
     DEVICE_STATUS_PLANNED,
@@ -25,7 +26,14 @@ class ManagementConsole(Report):
     def test_management_console(self):
         successcount = 0
         for device in (
-            Device.objects.exclude(status__in=(DEVICE_STATUS_INVENTORY, DEVICE_STATUS_OFFLINE, DEVICE_STATUS_PLANNED))
+            Device.objects.exclude(
+                status__in=(
+                    DEVICE_STATUS_INVENTORY,
+                    DEVICE_STATUS_OFFLINE,
+                    DEVICE_STATUS_PLANNED,
+                    DEVICE_STATUS_DECOMMISSIONING,
+                )
+            )
             .filter(device_role__slug__in=DEVICE_ROLES)
             .exclude(site__slug__in=EXCLUDED_SITES)
         ):

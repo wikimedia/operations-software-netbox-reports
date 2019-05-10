@@ -10,7 +10,6 @@ from dcim.constants import (
     DEVICE_STATUS_INVENTORY,
     DEVICE_STATUS_OFFLINE,
     DEVICE_STATUS_PLANNED,
-    DEVICE_STATUS_FAILED,
 )
 from dcim.models import Device
 from extras.reports import Report
@@ -23,11 +22,10 @@ INCLUDE_ROLES = ("server",)
 
 # statuses that only warn for parity failures
 EXCLUDE_STATUSES = (
-    DEVICE_STATUS_DECOMMISSIONING,
-    DEVICE_STATUS_FAILED,
     DEVICE_STATUS_INVENTORY,
     DEVICE_STATUS_OFFLINE,
     DEVICE_STATUS_PLANNED,
+    DEVICE_STATUS_DECOMMISSIONING,
 )
 
 

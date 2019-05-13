@@ -15,7 +15,7 @@ from dcim.models import Device
 from extras.reports import Report
 from virtualization.models import VirtualMachine
 
-CONFIG_FILE = "/etc/netbox-reports.cfg"
+CONFIG_FILE = "/etc/netbox/reports.cfg"
 
 # slugs for roles which we care about
 INCLUDE_ROLES = ("server",)

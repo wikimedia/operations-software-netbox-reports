@@ -13,8 +13,9 @@ from dcim.constants import (
 )
 from dcim.models import Device
 from extras.reports import Report
+from extras.models import CustomFieldValue
 
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 
 
 SITE_BLACKLIST = ("esams", "knams")
@@ -23,8 +24,33 @@ ASSET_TAG_RE = re.compile(r"WMF\d{4}")
 TICKET_RE = re.compile(r"RT #\d{2,}|T\d{5,}")
 
 
-def _get_devices_query():
-    return Device.objects.exclude(site__slug__in=SITE_BLACKLIST)
+def cf(device, field):
+    """Get the value for the specified custom field name.
+
+    This, combined with the a prefetch_related() results into much more
+    efficient access of custom fields and their values. See:
+    https://github.com/digitalocean/netbox/issues/3185
+
+    Be warned that this treats empty values as non-existing fields.
+    """
+    for cfv in device.custom_field_values.all():
+        if cfv.field.name == field:
+            return cfv.value
+    return None
+
+
+# monkey-patch the Device model for easy access to our custom cf() function
+Device.mpcf = cf
+
+
+def _get_devices_query(cf=False):
+    devices = Device.objects.exclude(site__slug__in=SITE_BLACKLIST)
+    if cf:
+        devices = devices.prefetch_related(
+            Prefetch("custom_field_values", queryset=CustomFieldValue.objects.select_related("field"))
+        )
+
+    return devices
 
 
 class Coherence(Report):
@@ -45,8 +71,8 @@ class Coherence(Report):
     def test_purchase_date(self):
         """Test that each device has a purchase date."""
         success_count = 0
-        for device in _get_devices_query():
-            purchase_date = device.cf()["purchase_date"]
+        for device in _get_devices_query(cf=True):
+            purchase_date = device.mpcf("purchase_date")
             if purchase_date is None:
                 self.log_failure(device, "missing purchase date")
             elif purchase_date > datetime.datetime.today().date():
@@ -98,11 +124,11 @@ class Coherence(Report):
     def test_ticket(self):
         """Determine if the procurement ticket matches the expected format."""
         success_count = 0
-        for device in _get_devices_query():
-            ticket = str(device.cf()["ticket"])
+        for device in _get_devices_query(cf=True):
+            ticket = str(device.mpcf("ticket"))
             if TICKET_RE.fullmatch(ticket):
                 success_count += 1
-            elif device.cf()["ticket"] is None:
+            elif device.mpcf("ticket") is None:
                 self.log_failure(device, "missing procurement ticket")
             else:
                 self.log_failure(device, "malformed procurement ticket: {}".format(ticket))
@@ -111,7 +137,9 @@ class Coherence(Report):
 
     def test_offline_rack(self):
         """Determine if offline boxes are (erroneously) assigned a rack."""
-        for device in _get_devices_query().filter(status=DEVICE_STATUS_OFFLINE).exclude(rack=None):
+        devices = _get_devices_query().filter(status=DEVICE_STATUS_OFFLINE).exclude(rack=None)
+        devices = devices.select_related("site", "rack")
+        for device in devices:
             self.log_failure(
                 device,
                 "rack defined for status {status} device: {site}-{rack}".format(

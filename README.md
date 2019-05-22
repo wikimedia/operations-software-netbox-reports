@@ -5,11 +5,10 @@ verify and manage the contents of Wikimedia's Netbox instance.
 
 # Contents #
 
-`reports/coherence.py`: Various "coherence" tests, basically ensuring that values are within expected ranges.
-`reports/management.py`: Tests the status of management console ports.
-`reports/oldhardware.py`: Tests the age of hardware based on the `purchase_date` custom field.
-`reports/puppetdb.py`: Tests the parity between Netbox and PuppetDB for various fields such as serial numbers.
-`reports/accounting.py`: Tests the consistency of Netbox data and asset information in a Google Sheet spreadsheet as maintained by Wikimedia Foundation's accounting department.
+* `reports/coherence.py`: Various "coherence" tests, basically ensuring that values are within expected ranges.
+* `reports/management.py`: Tests the status of management console ports.
+* `reports/puppetdb.py`: Tests the parity between Netbox and PuppetDB for various fields such as serial numbers.
+* `reports/accounting.py`: Tests the consistency of Netbox data and asset information in a Google Sheet spreadsheet as maintained by Wikimedia Foundation's accounting department.
 
 # Conventions and Contributing #
 

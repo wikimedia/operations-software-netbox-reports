@@ -7,6 +7,7 @@ import requests
 
 from dcim.constants import (
     DEVICE_STATUS_DECOMMISSIONING,
+    DEVICE_STATUS_FAILED,
     DEVICE_STATUS_INVENTORY,
     DEVICE_STATUS_OFFLINE,
     DEVICE_STATUS_PLANNED,
@@ -27,6 +28,7 @@ EXCLUDE_STATUSES = (
     DEVICE_STATUS_PLANNED,
     DEVICE_STATUS_DECOMMISSIONING,
 )
+EXCLUDE_AND_FAILED_STATUSES = EXCLUDE_STATUSES + (DEVICE_STATUS_FAILED,)
 
 
 class PuppetDB(Report):
@@ -89,7 +91,7 @@ class PuppetDB(Report):
 
     def test_netbox_in_puppetdb(self):
         """Check that all Netbox physical devices are in PuppetDB."""
-        devices = self.device_query.exclude(status__in=EXCLUDE_STATUSES)
+        devices = self.device_query.exclude(status__in=EXCLUDE_AND_FAILED_STATUSES)
         success = 0
 
         for device in devices:

@@ -58,6 +58,8 @@ class Accounting(Report):
         # ignore the first row, as it is the document header; the second row is
         # the header row, with column names, which we map here to our own names
         column_aliases = {
+            # date of the invoice (US format, MM/DD/YYYY)
+            "Date": "date",
             # serial number of the asset (used as unique key)
             "Serial Number": "serial",
             # asset tag of the asset ("WMFKKKK")
@@ -78,7 +80,7 @@ class Accounting(Report):
             # use the column names for a dict's keys and the row as values
             asset = dict(zip(column_names, row))
 
-            asset["Date"] = datetime.strptime(asset["Date"], "%m/%d/%Y").date()
+            asset["date"] = datetime.strptime(asset["date"], "%m/%d/%Y").date()
             serial = asset["serial"]
             asset_tag = asset["asset_tag"]
 
@@ -87,7 +89,7 @@ class Accounting(Report):
                 continue
 
             # skip items that have been received, but later returned (blackout)
-            if asset_tag.title() == "Return":  # usually just "Return"
+            if asset_tag.title() == "Return":
                 if serial in assets:
                     del assets[serial]
                 continue

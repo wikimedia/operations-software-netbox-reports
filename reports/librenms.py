@@ -31,6 +31,7 @@ EXCLUDE_SITES = ("esams",)
 MODEL_EXCLUDES = (
     Q(device_type__manufacturer__slug="netgear", device_role__slug="msw")
     | Q(device_type__manufacturer__slug="dell", device_type__slug="powerconnect-2748")
+    | Q(device_type__manufacturer__slug="sj-manufacturing", device_type__slug="thrupower")
     | Q(
         device_type__manufacturer__slug="sentry",
         device_type__slug__in=("smart-cdu", "switched-cdu", "c2l42ce-ycmfam00", "c2x42ce-2caf2m00"),

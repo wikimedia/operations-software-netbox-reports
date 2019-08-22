@@ -161,7 +161,10 @@ class LibreNMS(Report):
         for inventory_item in (
             InventoryItem.objects.filter(device_id__in=parents).exclude(serial__isnull=True).exclude(serial="")
         ):
-            if inventory_item.serial not in self._librenms.inventory and inventory_item.site.slug not in EXCLUDE_SITES:
+            if (
+                inventory_item.serial not in self._librenms.inventory
+                and inventory_item.device.site.slug not in EXCLUDE_SITES
+            ):
                 self.log_failure(inventory_item, "missing Netbox inventory item from LibreNMS")
             else:
                 success += 1

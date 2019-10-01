@@ -22,7 +22,7 @@ class CreateManagementInterface(Script):
         description="Automatically add IP address from appropriate management network at site.", default=True
     )
 
-    def _add_ip_to_device(self, device, interface):
+    def _add_ip_to_interface(self, device, interface):
         # determine prefix appropriate to site of device
         try:
             prefix = Prefix.objects.get(site=device.site, role__slug="management")

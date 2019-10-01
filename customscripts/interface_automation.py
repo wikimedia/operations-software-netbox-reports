@@ -25,18 +25,25 @@ class CreateManagementInterface(Script):
     def _add_ip_to_interface(self, device, interface):
         # determine prefix appropriate to site of device
         try:
-            prefix = Prefix.objects.get(site=device.site, role__slug="management")
+            prefix = Prefix.objects.get(site=device.site, role__slug="management", tenant=device.tenant)
         except ObjectDoesNotExist:
             message = "Can't find prefix for site {} on device {}".format(device.site.slug, device.name)
             self.log_failure(message)
             return message
+        self.log_info("Selecting address from network {}".format(prefix.prefix))
         available_ips = iter(prefix.get_available_ips())
-        # skip the first /24 net as this is reserved for network devices
-        zeroth_net = list(ipaddress.ip_network(prefix.prefix).subnets(new_prefix=24))[0]
+
+        # disable 0net skipping on frack
+        if device.tenant and device.tenant.slug == 'fr-tech':
+            zeroth_net = None
+        else:
+            # skip the first /24 net as this is reserved for network devices
+            zeroth_net = list(ipaddress.ip_network(prefix.prefix).subnets(new_prefix=24))[0]
+
         ip = None
         for ip in available_ips:
             address = ipaddress.ip_address(ip)
-            if address not in zeroth_net:
+            if zeroth_net is None or address not in zeroth_net:
                 break
             else:
                 ip = None
@@ -61,7 +68,7 @@ class CreateManagementInterface(Script):
             return message
 
         # fall through to failure
-        message = "Not enough IPs to allocate one on prefix {}".format(prefix.name)
+        message = "Not enough IPs to allocate one on prefix {}".format(prefix.prefix)
         self.log_failure(message)
         return message
 
@@ -78,7 +85,7 @@ class CreateManagementInterface(Script):
             mgmt.save()
 
         if data['add_ip']:
-            return self._add_ip_to_interface(self, device, mgmt)
+            return self._add_ip_to_interface(device, mgmt)
 
         else:
             message = "Created mgmt on device {}".format(device.name)

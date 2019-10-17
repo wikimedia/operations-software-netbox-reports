@@ -34,7 +34,13 @@ MODEL_EXCLUDES = (
     | Q(device_type__manufacturer__slug="sj-manufacturing", device_type__slug="thrupower")
     | Q(
         device_type__manufacturer__slug="sentry",
-        device_type__slug__in=("smart-cdu", "switched-cdu", "c2l42ce-ycmfam00", "c2x42ce-2caf2m00"),
+        device_type__slug__in=(
+            "smart-cdu",  # Legacy generic model name
+            "switched-cdu",  # Legacy generic model name
+            "c2l42ce-ycmfam00",  # Smart Link PRO2 (42) - secondary device
+            "c2l36te-ycmfam99",  # Smart Link PRO2 (36) - secondary device
+            "c2x42ce-2caf2m00",  # Switched Expansion PRO2 - secondary device
+        ),
     )
 )
 

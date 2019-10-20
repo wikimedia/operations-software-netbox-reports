@@ -24,7 +24,7 @@ INCLUDE_DEVICE_ROLES_LNMS_CHECK = ("asw", "msw", "cr", "mr", "pfw", "pdu", "scs"
 INCLUDE_DEVICE_ROLES = ("asw", "msw", "cr", "mr", "pfw", "pdu")
 
 # Sites to exclude
-EXCLUDE_SITES = ("esams",)
+EXCLUDE_SITES = ()
 
 # Query filters for excluding certain models that don't seem to report correctly to LibreNMS
 # or are unmanaged.

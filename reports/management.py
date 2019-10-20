@@ -17,8 +17,8 @@ from extras.reports import Report
 DEVICE_ROLES = ("cr", "asw", "mr", "pfw")
 
 # These are points of presence slugs that we ignore for the purposes of this report.
-# Esams excluded until site is fixed
-EXCLUDED_SITES = ("eqord", "eqdfw", "knams", "esams")
+# Network POPs don't have a console server
+EXCLUDED_SITES = ("eqord", "eqdfw", "knams")
 
 
 class ManagementConsole(Report):

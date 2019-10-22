@@ -155,3 +155,16 @@ class Coherence(Report):
             .filter(rack=None)
         ):
             self.log_failure(device, "no rack defined for status {} device".format(device.get_status_display()))
+
+    def test_connected_unracked(self):
+        """Determine if unracked boxes still have console connections marked as conneced."""
+        for device in _get_devices_query().filter(rack=None):
+            consoleports = device.consoleports.all()
+            good = True
+            msgs = ["connected console ports attached to unracked device {}:".format(device.name)]
+            for port in consoleports:
+                if port.connection_status:
+                    msgs.append(port.name)
+                    good = False
+            if not good:
+                self.log_failure(device, " ".join(msgs))

@@ -84,7 +84,11 @@ class LibreNMSData:
                      AND serial NOT IN ("", "N/A");"""
             )
             for device in cursor.fetchall():
-                if device["hardware"].startswith("node"):  # Juniper hardware column sometimes has nodeN at the start.
+                if not device["hardware"]:
+                    # Unexpectedly, some devices will return an null for hardware.
+                    device["hardware"] = "UNKNOWN"
+                # Juniper hardware column sometimes has nodeN at the start.
+                if device["hardware"].startswith("node"):
                     device["hardware"] = device["hardware"].split(" ", 1)[1]
 
                 if device["serial"] in self.devices:

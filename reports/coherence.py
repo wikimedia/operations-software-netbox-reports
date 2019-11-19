@@ -6,7 +6,6 @@ import datetime
 import re
 
 from dcim.constants import (
-    DEVICE_STATUS_ACTIVE,
     DEVICE_STATUS_DECOMMISSIONING,
     DEVICE_STATUS_OFFLINE,
     DEVICE_STATUS_PLANNED,
@@ -169,20 +168,3 @@ class Coherence(Report):
                     good = False
             if not good:
                 self.log_failure(device, " ".join(msgs))
-
-    def test_device_name(self):
-        """Device names should be composed of lowercase letters, numbers and hyphens."""
-        device_re = re.compile(r"^[a-z]+[a-z0-9-]?$")
-        success = 0
-        warnings = []
-        for device in _get_devices_query():
-            if not device_re.match(device.name):
-                if device.status == DEVICE_STATUS_ACTIVE:
-                    self.log_failure(device, "malformed device name")
-                else:
-                    warnings.append(device)
-            else:
-                success += 1
-
-        [self.log_warning(x, "malformed device name") for x in warnings]
-        self.log_success(None, "{} correctly formatted device names.".format(success))

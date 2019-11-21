@@ -1,5 +1,8 @@
 """
-Check certain kinds of devices for the presence of a console port.
+Report on various cable, port, and termination related errors.
+
+BLACKLISTS:
+  test_blank_cable_label: eqiad
 """
 
 import re
@@ -33,6 +36,8 @@ INTERFACES_REGEXP = (
     r"^enp\d+s\d+(f\d+)?((d|np)\d+)?$",  # systemd 'path' devices
     r"^\d+$",  # Netgear switch interfaces are just numbers.
 )
+
+BLANK_CABLES_SITE_BLACKLIST = ('eqiad',)
 
 
 class Cables(Report):
@@ -138,6 +143,8 @@ class Cables(Report):
         for cable in Cable.objects.filter(status=True):
             if cable.label is None or not cable.label.strip():
                 site = self._get_site_slug_for_cable(cable)
+                if site in BLANK_CABLES_SITE_BLACKLIST:
+                    continue
                 self.log_failure(cable, "blank cable label (site {})".format(site))
             else:
                 success += 1

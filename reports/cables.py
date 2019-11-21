@@ -136,7 +136,7 @@ class Cables(Report):
         """Cables should not have blank labels."""
         success = 0
         for cable in Cable.objects.filter(status=True):
-            if cable.label is not None or not cable.label.strip():
+            if cable.label is None or not cable.label.strip():
                 site = self._get_site_slug_for_cable(cable)
                 self.log_failure(cable, "blank cable label (site {})".format(site))
             else:

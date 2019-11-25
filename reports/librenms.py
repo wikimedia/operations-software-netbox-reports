@@ -37,6 +37,9 @@ MODEL_EXCLUDES = (
         device_type__slug__in=(
             "smart-cdu",  # Legacy generic model name
             "switched-cdu",  # Legacy generic model name
+            "cl-42vyme15",  # Smart Pips Link V42 - secondary device
+            "cx-24vy-l30m",  # Switched CDU Expansion Unit - secondary device
+            "cx-24vym311a1",  # Switched CDU Expansion Unit - secondary device
             "c2l42ce-ycmfam00",  # Smart Link PRO2 (42) - secondary device
             "c2l36te-ycmfam99",  # Smart Link PRO2 (36) - secondary device
             "c2x42ce-2caf2m00",  # Switched Expansion PRO2 - secondary device
